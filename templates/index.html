@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weather Finder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Weather Finder</h1>
+
+      <form method="POST" class="search-form">
+        <input
+          type="text"
+          name="city"
+          placeholder="Enter a city"
+          value="{{ request.form.get('city', '') }}"
+          required
+        />
+        <button type="submit">Check Weather</button>
+      </form>
+
+      {% if error %}
+      <div class="message error">
+        {{ error }}
+      </div>
+      {% endif %}
+
+      {% if result %}
+      <div class="weather-card">
+        <div class="weather-header">
+          <div>
+            <p class="label">Current weather in</p>
+            <h2>{{ result.city }}, {{ result.country }}</h2>
+          </div>
+          <div class="icon-box">{{ result.icon }}</div>
+        </div>
+
+        <div class="temperature-row">
+          <span class="temperature">{{ result.temperature }}°C</span>
+          <span class="description">{{ result.description }}</span>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <span>Humidity</span>
+            <strong>{{ result.humidity }}%</strong>
+          </div>
+          <div class="stat">
+            <span>Wind</span>
+            <strong>{{ result.wind_speed }} km/h</strong>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </body>
+</html>
