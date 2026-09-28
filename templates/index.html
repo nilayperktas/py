@@ -10,16 +10,22 @@
     <div class="container">
       <h1>Weather Finder</h1>
 
-      <form method="POST" class="search-form">
-        <input
-          type="text"
-          name="city"
-          placeholder="Enter a city"
-          value="{{ request.form.get('city', '') }}"
-          required
-        />
+      <form method="POST" class="search-form" id="search-form">
+        <div style="position:relative; flex:1;">
+          <input
+            id="city-input"
+            type="text"
+            name="city"
+            placeholder="Enter a city"
+            value="{{ request.form.get('city', '') }}"
+            autocomplete="off"
+            required
+          />
+          <div id="suggestions" class="suggestions" aria-hidden="true"></div>
+        </div>
         <button type="submit">Check Weather</button>
       </form>
+      <div id="recent" class="recent"></div>
 
       {% if error %}
       <div class="message error">
@@ -52,8 +58,59 @@
             <strong>{{ result.wind_speed }} km/h</strong>
           </div>
         </div>
+        <div style="margin-top:12px; text-align:right;">
+          <a href="/forecast?city={{ result.city }}">View 5-day forecast</a>
+        </div>
       </div>
       {% endif %}
     </div>
+    <script>
+      // Simple debounce
+      function debounce(fn, ms){
+        let t;
+        return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
+      }
+
+      const input = document.getElementById('city-input');
+      const suggestions = document.getElementById('suggestions');
+      const recentEl = document.getElementById('recent');
+
+      function showRecent(){
+        const list = JSON.parse(localStorage.getItem('recentCities')||'[]');
+        if(!list.length){ recentEl.innerHTML=''; return; }
+        recentEl.innerHTML = '<div style="margin-top:12px;font-weight:600;color:#334155">Recent</div>' + list.map(c=>`<button class="recent-btn">${c}</button>`).join(' ');
+        document.querySelectorAll('.recent-btn').forEach(b=>{
+          b.addEventListener('click',()=>{ input.value=b.textContent; document.getElementById('search-form').requestSubmit(); });
+        });
+      }
+
+      function saveRecent(city){
+        if(!city) return;
+        const list = JSON.parse(localStorage.getItem('recentCities')||'[]');
+        const normalized = city;
+        const idx = list.indexOf(normalized);
+        if(idx!==-1) list.splice(idx,1);
+        list.unshift(normalized);
+        while(list.length>6) list.pop();
+        localStorage.setItem('recentCities', JSON.stringify(list));
+      }
+
+      async function fetchSuggestions(q){
+        if(!q) { suggestions.innerHTML=''; suggestions.style.display='none'; return; }
+        try{
+          const res = await fetch(`/suggest?q=${encodeURIComponent(q)}`);
+          const data = await res.json();
+          if(!data.length){ suggestions.innerHTML=''; suggestions.style.display='none'; return; }
+          suggestions.innerHTML = data.map(item=>`<div class="s-item">${item.name}, ${item.country}</div>`).join('');
+          suggestions.style.display='block';
+          document.querySelectorAll('.s-item').forEach(el=> el.addEventListener('click', ()=>{ input.value = el.textContent; suggestions.style.display='none'; }));
+        }catch(e){ suggestions.innerHTML=''; suggestions.style.display='none'; }
+      }
+
+      input && input.addEventListener('input', debounce((e)=>{ fetchSuggestions(e.target.value); }, 300));
+      // save recent on submit
+      document.getElementById('search-form')?.addEventListener('submit', ()=>{ saveRecent(input.value); setTimeout(showRecent,100); });
+      showRecent();
+    </script>
   </body>
 </html>

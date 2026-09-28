@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>5-day Forecast</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <div class="container">
+      <h1>5-day Forecast</h1>
+
+      {% if error %}
+      <div class="message error">{{ error }}</div>
+      {% endif %}
+
+      {% if city and days %}
+      <h2>{{ city }}</h2>
+      <div class="weather-card">
+        <div class="stats" style="grid-template-columns: repeat(5, 1fr);">
+          {% for d in days %}
+          <div class="stat" style="text-align:center;">
+            <div style="font-weight:600;">{{ d.date }}</div>
+            <div style="font-size:2rem;">{{ d.icon }}</div>
+            <div style="margin-top:8px;">{{ d.tmax }}° / {{ d.tmin }}°</div>
+            <div style="color:#64748b;font-size:0.9rem;">{{ d.description }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+      <p>Enter a city on the homepage and click the forecast link.</p>
+      {% endif %}
+
+      <p style="margin-top:16px;"><a href="/">Back</a></p>
+    </div>
+  </body>
+</html>
